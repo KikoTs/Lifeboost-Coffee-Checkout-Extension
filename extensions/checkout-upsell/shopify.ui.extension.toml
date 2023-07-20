@@ -1,11 +1,12 @@
 type = "checkout_ui_extension"
-name = "checkout-ui-banner"
+name = "Checkout-Upsell"
 
 extension_points = [
   'Checkout::Dynamic::Render'
 ]
-[capabilities]
+[capabilities] 
 api_access = true
+
 
 # [[metafields]]
 # namespace = "my-namespace"

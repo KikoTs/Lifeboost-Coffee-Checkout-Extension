@@ -14,58 +14,77 @@ import {
   useCartLines,
   useApplyCartLinesChange,
   useExtensionApi,
+  Select,
+  Stepper,
 } from "@shopify/checkout-ui-extensions-react";
 
-// Set up the entry point for the extension
 render("Checkout::Dynamic::Render", () => <App />);
 
-// The function that will render the app
 function App() {
-  // Use `query` for fetching product data from the Storefront API, and use `i18n` to format
-  // currencies, numbers, and translate strings
   const { query, i18n } = useExtensionApi();
-  // Get a reference to the function that will apply changes to the cart lines from the imported hook
   const applyCartLinesChange = useApplyCartLinesChange();
-  // Set up the states
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
   const [showError, setShowError] = useState(false);
-
-  // On initial load, fetch the product variants
+  const [quantity, setQuantity] = useState(1);
+  const [variant, setVariant] = useState("");
+    // Preselect first variant
+    useEffect(() => {
+      if (products[0]) {
+        const { variants } = products[0];
+        if (variants && variants.nodes.length > 0) {
+          setVariant(variants.nodes[0].id);
+        }
+      }
+    }, [products]);
   useEffect(() => {
-    // Set the loading state to show some UI if you're waiting
     setLoading(true);
-    // Use `query` api method to send graphql queries to the Storefront API
     query(
-      `query ($first: Int!) {
-        products(first: $first) {
-          nodes {
+  `query ($first: Int!, $handle: String!) {
+    collectionByHandle(handle: $handle) {
+      products(first: $first, sortKey: BEST_SELLING) {
+        edges {
+          node {
             id
             title
             images(first:1){
-              nodes {
-                url
+              edges {
+                node {
+                  url
+                }
               }
             }
-            variants(first: 1) {
-              nodes {
-                id
-                price {
-                  amount
+            variants(first: 10) {
+              edges {
+                node {
+                  id
+                  title
+                  price {
+                    amount
+                  }
                 }
               }
             }
           }
         }
-      }`,
-      {
-        variables: {first: 5},
-      },
-    )
+      }
+    }
+  }`,
+  {
+    variables: {first: 5, handle: "all-products-new"},
+  },
+)
     .then(({data}) => {
-      // Set the `products` array so that you can reference the array items
-      setProducts(data.products.nodes);
+      const productsFromCollection = data.collectionByHandle.products.edges.map(edge => {
+        const { node: productNode } = edge;
+        return {
+          ...productNode,
+          images: { nodes: productNode.images.edges.map(edge => edge.node) },
+          variants: { nodes: productNode.variants.edges.map(edge => edge.node) },
+        };
+      });
+      setProducts(productsFromCollection);
     })
     .catch((error) => console.error(error))
     .finally(() => setLoading(false));
@@ -79,7 +98,6 @@ function App() {
     }
   }, [showError]);
 
-  // Access the current cart lines and subscribe to changes
   const lines = useCartLines();
 
   // Show a loading UI if you're waiting for product variant data
@@ -115,30 +133,29 @@ function App() {
 
   // Get the IDs of all product variants in the cart
   const cartLineProductVariantIds = lines.map((item) => item.merchandise.id);
-  // Filter out any products on offer that are already in the cart
   const productsOnOffer = products.filter(
     (product) => {
-      const isProductVariantInCart = product.variants.nodes.some(
-        ({id}) => cartLineProductVariantIds.includes(id)
-      );
+      const isProductVariantInCart = product.variants.nodes.some(({id}) => cartLineProductVariantIds.includes(id));
       return !isProductVariantInCart;
     }
   );
 
-  // If all of the products are in the cart, then don't show the offer
   if (!productsOnOffer.length) {
     return null;
   }
 
-  // Choose the first available product variant on offer
   const { images, title, variants } = productsOnOffer[0];
 
-  // Localize the currency for international merchants and customers
+  // // Preselect first variant
+  // useEffect(() => {
+  //   if (variants.nodes.length > 0) {
+  //     setVariant(variants.nodes[0].id);
+  //   }
+  // }, [variants]);
+
   const renderPrice = i18n.formatCurrency(variants.nodes[0].price.amount);
 
-  // Use the first product image or a placeholder if the product has no images
-  const imageUrl = images.nodes[0]?.url
-    ?? "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_medium.png?format=webp&v=1530129081";
+  const imageUrl = images.nodes[0]?.url ?? "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_medium.png?format=webp&v=1530129081";
 
   return (
     <BlockStack spacing="loose">
@@ -147,10 +164,6 @@ function App() {
       <BlockStack spacing="loose">
         <InlineLayout
           spacing="base"
-          // Use the `columns` property to set the width of the columns
-          // Image: column should be 64px wide
-          // BlockStack: column, which contains the title and price, should "fill" all available space
-          // Button: column should "auto" size based on the intrinsic width of the elements
           columns={[64, "fill", "auto"]}
           blockAlignment="center"
         >
@@ -163,10 +176,24 @@ function App() {
             aspectRatio={1}
           />
           <BlockStack spacing="none">
-            <Text size="medium" emphasis="strong">
-              {title}
-            </Text>
+            <Text size="medium" emphasis="strong">{title}</Text>
             <Text appearance="subdued">{renderPrice}</Text>
+            {/* Show variant selector if variants count > 1 */}
+            {variants.nodes.length > 1 && 
+              <Select
+                label='Variant'
+                options={variants.nodes.map((variant) => ({ label:variant.title , value: variant.id }))}
+                value={variant}
+                onChange={(selected) => setVariant(selected)}
+              />
+            }
+            <Stepper
+              value={quantity}
+              minValue={2} // Limit quantity to minimum 1
+              onChange={setQuantity}
+              onIncrement={() => setQuantity(quantity + 1)}
+              onDecrement={() => quantity > 2 ? setQuantity(quantity - 1) : null} // Do nothing if quantity is 1 and decrementing
+            />
           </BlockStack>
           <Button
             kind="secondary"
@@ -174,17 +201,13 @@ function App() {
             accessibilityLabel={`Add ${title} to cart`}
             onPress={async () => {
               setAdding(true);
-              // Apply the cart lines change
               const result = await applyCartLinesChange({
                 type: "addCartLine",
-                merchandiseId: variants.nodes[0].id,
-                quantity: 1,
+                merchandiseId: variant,
+                quantity: quantity,
               });
               setAdding(false);
               if (result.type === "error") {
-                // An error occurred adding the cart line
-                // Verify that you're using a valid product variant ID
-                // For example, 'gid://shopify/ProductVariant/123'
                 setShowError(true);
                 console.error(result.message);
               }
