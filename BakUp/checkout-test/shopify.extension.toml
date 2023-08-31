@@ -1,0 +1,17 @@
+api_version = "2023-07"
+
+[[extensions]]
+type = "checkout_ui_extension"
+name = "Checkout-UpsellTest"
+handle = "checkout-test"
+
+[[extensions.targeting]]
+module = "./src/Checkout.jsx"
+target = "purchase.checkout.block.render"
+
+[[extensions.targeting]]
+module = "./src/CartItems.jsx"
+target = "purchase.checkout.cart-line-item.render-after"
+
+[extensions.capabilities]
+api_access = true
