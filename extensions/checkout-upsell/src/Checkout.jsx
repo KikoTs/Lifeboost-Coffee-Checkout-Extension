@@ -23,6 +23,7 @@ import {
   Choice,
   ChoiceList,
   View,
+  useSettings,
 } from "@shopify/ui-extensions-react/checkout";
 
 import React, { useEffect, useState } from "react";
@@ -34,6 +35,14 @@ export default reactExtension(
 function App() {
   const { extension } = useApi();
   const { target } = extension;
+  const {title_text, collection_handle, enable_subscription, subscription_text, add_to_checkout_text} = useSettings();
+
+  const titleText = title_text ?? 'You Might Also Like';
+  const collectionHandle = collection_handle ?? 'BEST_SELLING';
+  const enableSubscription = enable_subscription ?? false;
+  const subscriptionText = subscription_text ?? 'Subscribe & save 25%';
+  const addToCheckoutText = add_to_checkout_text ?? 'Add';
+
   const { query, i18n } = useExtensionApi();
   const applyCartLinesChange = useApplyCartLinesChange();
   const [products, setProducts] = useState([]);
@@ -49,7 +58,7 @@ function App() {
     query(
       `query ($first: Int!, $handle: String!) {
     collectionByHandle(handle: $handle) {
-      products(first: $first, sortKey: BEST_SELLING) {
+      products(first: $first, sortKey: ${collectionHandle}) {
         edges {
           node {
             id
@@ -166,11 +175,10 @@ function App() {
   const submitToCarLines = async () => {
     setAdding(true);
     const variantToAdd =
-      variant === "" ||
-      !variants.nodes.includes(variant) ||
-      variants.nodes.length == 1
-        ? variants.nodes[0].id
-        : variant;
+    !variants.nodes.some(node => node.id === variant)  ||
+    variants.nodes.length == 1
+      ? variants.nodes[0].id
+      : variant
     let carLines = {
       type: "addCartLine",
       merchandiseId: variantToAdd,
@@ -193,11 +201,10 @@ function App() {
   const submitToCarLinesSub = async () => {
     setAddingSub(true);
     const variantToAdd =
-      variant === "" ||
-      !variants.nodes.includes(variant) ||
-      variants.nodes.length == 1
-        ? variants.nodes[0].id
-        : variant;
+    !variants.nodes.some(node => node.id === variant)  ||
+    variants.nodes.length == 1
+      ? variants.nodes[0].id
+      : variant
     const SelectedVariant = variants.nodes.find(
       (myVariant) => myVariant.id === variantToAdd
     );
@@ -233,7 +240,14 @@ function App() {
 
   return (
     <View>
-            <Text size="medium" emphasis="bold" >You Might Also Like</Text>
+      <Divider></Divider>
+      <View padding={'small200'}>
+   
+   </View>
+            <Text size="medium" emphasis="bold" >{titleText}</Text>
+            <View padding={'small200'}>
+   
+   </View>
             <BlockStack border="base" spacing="none" padding="small100">
 
 <View>
@@ -285,8 +299,7 @@ function App() {
                   return { label: variante.title, value: variante.id };
                 })}
                 value={
-                  variant === "" ||
-                  !variants.nodes.includes(variant) ||
+                  !variants.nodes.some(node => node.id === variant)  ||
                   variants.nodes.length == 1
                     ? variants.nodes[0].id
                     : variant
@@ -302,7 +315,7 @@ function App() {
                     <View padding={'small200'}>
    
             </View>
-        {variants.nodes[0].sellingPlanAllocations.nodes.length > 0 && (
+        {enableSubscription && variants.nodes[0].sellingPlanAllocations.nodes.length > 0 && (
 
                                              <ChoiceList
                                              name="Subscribe to save 25%"
@@ -313,7 +326,7 @@ function App() {
                                            >
                                              <BlockStack>
                                                <Choice id="Subscribe">
-                                               Subscribe & save 25%
+                                               {subscriptionText}
                                                </Choice>
                                              </BlockStack>
                                            </ChoiceList>
@@ -361,7 +374,7 @@ function App() {
           accessibilityLabel={`Add ${title} to cart`}
           onPress={isSub ? submitToCarLinesSub  : submitToCarLines}
         >
-          Add
+          {addToCheckoutText}
         </Button>
       </BlockStack>
     </Grid>

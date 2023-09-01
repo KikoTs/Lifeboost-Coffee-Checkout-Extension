@@ -43,9 +43,27 @@ api_access = true
 # your extension. Learn more:
 # https://shopify.dev/docs/api/checkout-ui-extensions/unstable/configuration#settings-definition
 
-# [extensions.settings]
-# [[extensions.settings.fields]]
-# key = "banner_title"
-# type = "single_line_text_field"
-# name = "Banner title"
-# description = "Enter a title for the banner"
+[extensions.settings]
+[[extensions.settings.fields]]
+key = "enable_subscription"
+type = "boolean"
+name = "Enable (Subscribe & Save) button"
+description = "Enable the (Subscribe & Save) button in the line items in checkout"
+
+[[extensions.settings.fields]]
+key = "subscription_text"
+type = "single_line_text_field"
+name = "Text in (Subscribe & Save) button"
+description = "Text to show in the (Subscribe & Save) button example: Subscribe & Save 25%"
+
+[[extensions.settings.fields]]
+key = "enable_remove"
+type = "boolean"
+name = "Enable (Remove) button"
+description = "Enable the (Remove) button in the line items in checkout"
+
+[[extensions.settings.fields]]
+key = "remove_text"
+type = "single_line_text_field"
+name = "Text in (Remove) button"
+description = "Text to show in the (Remove) button example: Remove"

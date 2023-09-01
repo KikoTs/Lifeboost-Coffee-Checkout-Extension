@@ -43,9 +43,33 @@ api_access = true
 # your extension. Learn more:
 # https://shopify.dev/docs/api/checkout-ui-extensions/unstable/configuration#settings-definition
 
-# [extensions.settings]
-# [[extensions.settings.fields]]
-# key = "banner_title"
-# type = "single_line_text_field"
-# name = "Banner title"
-# description = "Enter a title for the banner"
+[extensions.settings]
+[[extensions.settings.fields]]
+key = "fomo_time"
+type = "number_integer"
+name = "Countdown time in minutes"
+description = "Enter the time in minutes to be shown in the countdown."
+
+[[extensions.settings.fields]]
+key = "fomo_title"
+type = "single_line_text_field"
+name = "Title"
+description = "Enter the title of the widget example: Products are in high demand! Get yours now before they're gone."
+
+[[extensions.settings.fields]]
+key = "fomo_icon"
+type = "single_line_text_field"
+name = "Icon"
+description = "Enter the name of the icon to use all icons can be seen in https://shopify.dev/docs/api/checkout-ui-extensions/2023-07/components/media/icon#icons"
+
+[[extensions.settings.fields]]
+key = "hurry_text"
+type = "single_line_text_field"
+name = "Hurry Text"
+description = "In this field you must provide {time} in the text to show the countdown example: Hurry! Your selected items are only reserved for {time}. Complete your order now!"
+
+[[extensions.settings.fields]]
+key = "end_text"
+type = "single_line_text_field"
+name = "Timer ended text"
+description = "Enter the text to show after the countdown has ended example: Time's up! Please finish the checkout as the item is still in your cart."

@@ -6,7 +6,8 @@ import {
   Text,
   Icon,
   InlineLayout,
-  View
+  View,
+  useSettings,
 } from '@shopify/ui-extensions-react/checkout';
 import React, { useEffect, useState } from 'react';
 export default reactExtension(
@@ -17,7 +18,15 @@ export default reactExtension(
 function Extension() {
   // const {extensionPoint} = useExtensionApi();
   // const translate = useTranslate();
-  const [totalSeconds, setTotalSeconds] = useState(10 * 60); // Set initial counter to 10 minutes
+  const {fomo_title, fomo_icon, hurry_text, end_text, fomo_time} = useSettings();
+  const fomoTitle = fomo_title ?? 'Products are in high demand! Get yours now before they\'re gone.';
+  const fomoIcon = fomo_icon ?? 'clock';
+  const hurryText = hurry_text ?? 'Hurry! Your selected items are only reserved for {time}. Complete your order now!';
+  const endText = end_text ?? 'Time\'s up! Please finish the checkout as the item is still in your cart.';
+  const fomoTime = fomo_time ?? 10;
+
+
+  const [totalSeconds, setTotalSeconds] = useState(fomoTime * 60); // Set initial counter to 10 minutes
 
   useEffect(() => {
     totalSeconds > 0 && setTimeout(() => setTotalSeconds(totalSeconds - 1), 1000);
@@ -35,11 +44,11 @@ function Extension() {
     <View>
           <InlineLayout columns={['5%', '95%']}>
       <View  padding="base">
-      <Icon source="clock" />
+      <Icon source={fomoIcon} />
       </View>
       <View padding="base">
       <Text size="base">
-      Products are in high demand!  Get yours now before they're gone.
+      {fomoTitle}
         </Text>
       
       </View>
@@ -47,15 +56,15 @@ function Extension() {
 
 
     {    totalSeconds > 0 ? 
-      <View border="base" padding="base"> 
+      <View border="base" padding="base" borderWidth="base" borderRadius="large"> 
         <Text appearance="accent" size="medium" >
-          Hurry! Your selected items are only reserved for {formatTime(totalSeconds)}. Complete your order now!
+          {hurryText.replace('{time}', formatTime(totalSeconds))}
         </Text>
       </View> 
     : 
       <View border="base" padding="base" borderWidth="base" borderRadius="large"> 
-        <Text appearance="subdued" size="base"  >
-          Time's up! Please finish the checkout as the item is still in your cart.
+        <Text appearance="subdued" size="base">
+          {endText}
         </Text>
       </View>}
     </View>
