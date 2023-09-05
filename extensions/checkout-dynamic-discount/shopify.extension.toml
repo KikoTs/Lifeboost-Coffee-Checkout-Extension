@@ -7,8 +7,8 @@ api_version = "2023-07"
 
 [[extensions]]
 type = "ui_extension"
-name = "checkout-upsell"
-handle = "checkout-upsell"
+name = "checkout-dynamic-discount"
+handle = "checkout-dynamic-discount"
 
 # Controls where in Shopify your extension will be injected,
 # and the file that contains your extension’s source code. Learn more:
@@ -17,7 +17,6 @@ handle = "checkout-upsell"
 [[extensions.targeting]]
 module = "./src/Checkout.tsx"
 target = "purchase.checkout.block.render"
-
 
 [extensions.capabilities]
 # Gives your extension access to directly query Shopify’s storefront API.
@@ -29,39 +28,24 @@ api_access = true
 # https://shopify.dev/docs/api/checkout-ui-extensions/unstable/configuration#network-access
 # network_access = true
 
+# Loads metafields on checkout resources, including the cart,
+# products, customers, and more. Learn more:
+# https://shopify.dev/docs/api/checkout-ui-extensions/unstable/configuration#metafields
 
-
+# [[extensions.metafields]]
+# namespace = "my_namespace"
+# key = "my_key"
+# [[extensions.metafields]]
+# namespace = "my_namespace"
+# key = "my_other_key"
 
 # Defines settings that will be collected from merchants installing
 # your extension. Learn more:
 # https://shopify.dev/docs/api/checkout-ui-extensions/unstable/configuration#settings-definition
-[[extensions.settings.fields]]
-key = "title_text"
-type = "single_line_text_field"
-name = "Title for the widget"
-description = "With this field you can change the text shown title of the widget in example: You Might Also Like"
 
-[extensions.settings]
-[[extensions.settings.fields]]
-key = "collection_handle"
-type = "single_line_text_field"
-name = "Collection Handle"
-description = "Enter the handle of the collection example: BEST_SELLING"
-
-[[extensions.settings.fields]]
-key = "enable_subscription"
-type = "boolean"
-name = "Enable Subscriptions"
-description = "Enabling this field adds the checkbox for subscription to products"
-
-[[extensions.settings.fields]]
-key = "subscription_text"
-type = "single_line_text_field"
-name = "Subscription Checkbox Text"
-description = "Write any text to be shown for the Subscription Checkbox in example: Subscribe & save 25%"
-
-[[extensions.settings.fields]]
-key = "add_to_checkout_text"
-type = "single_line_text_field"
-name = "Add to Checkout Text"
-description = "With this field you can change the text shown in the Add to Checkout Button in example: Add"
+# [extensions.settings]
+# [[extensions.settings.fields]]
+# key = "banner_title"
+# type = "single_line_text_field"
+# name = "Banner title"
+# description = "Enter a title for the banner"

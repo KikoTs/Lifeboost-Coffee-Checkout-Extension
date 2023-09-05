@@ -15,7 +15,7 @@ handle = "checkout-upsell-remove-addon"
 # https://shopify.dev/docs/api/checkout-ui-extensions/unstable/extension-targets-overview
 
 [[extensions.targeting]]
-module = "./src/Checkout.jsx"
+module = "./src/Checkout.tsx"
 target = "purchase.checkout.cart-line-item.render-after"
 
 [extensions.capabilities]

@@ -1,3 +1,46 @@
+// Interfaces
+
+interface SellingPlan {
+  id: string;
+  name: string;
+}
+
+interface Merchandise {
+  id: string;
+  title: string;
+  product: {
+    id: string;
+  };
+  sellingPlan?: {
+    id: string;
+  };
+}
+
+interface ProductVariantNode {
+  id: string;
+  title: string;
+  price: {
+    amount: string;
+  };
+  sellingPlanAllocations: {
+    nodes: Array<{ sellingPlan: SellingPlan }>;
+  };
+}
+
+interface Product {
+  id: string;
+  title: string;
+  variants: {
+    edges: Array<{ node: ProductVariantNode }>;
+  };
+}
+
+interface QueryResponse {
+  product: Product;
+}
+
+
+
 import {
   reactExtension,
   Button,
@@ -6,11 +49,11 @@ import {
   View,
   BlockStack,
   Select,
-  useExtensionApi,
+  useApi,
   useApplyCartLinesChange,
   useSettings,
 } from "@shopify/ui-extensions-react/checkout";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default reactExtension(
   "purchase.checkout.cart-line-item.render-after",
@@ -19,18 +62,18 @@ export default reactExtension(
 
 function Extension() {
   const { enable_remove, enable_subscription } = useSettings();
-  const enableRemove = enable_remove ?? true;
-  const enableSubscription = enable_subscription ?? true;
+  const enableRemove: boolean = !!enable_remove ?? true;
+  const enableSubscription: boolean = !!enable_subscription ?? true;
 
   return (
     <View blockAlignment="start">
       {enableSubscription && (
-        <View spacing="base">
+        <View>
           <SubscribeAndSave />
         </View>
       )}
       {enableRemove && (
-        <View spacing="base">
+        <View>
           <Remove />
         </View>
       )}
@@ -40,19 +83,19 @@ function Extension() {
 
 function SubscribeAndSave() {
   const { subscription_text } = useSettings();
-  const subscriptionText = subscription_text ?? "Subscribe & Save 25%";
-  const { query } = useExtensionApi();
+  const subscriptionText: string = subscription_text?.toString() ?? "Subscribe & Save 25%";
+  const { query } = useApi();
   const { merchandise, id, quantity, attributes } = useTarget();
   const applyCartLinesChange = useApplyCartLinesChange();
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [sellPlanOptions, setSellPlanOptions] = useState([]);
+  const [sellPlanOptions, setSellPlanOptions] = useState<SellingPlan[]>([]);
   const [loading, setLoading] = useState(false);
   const [showError, setShowError] = useState(false);
 
   const fetchProductSellingPlans = async () => {
     try {
       setLoading(true);
-      const { data } = await query(
+      const { data } = await query<QueryResponse>(
         `
         query getProductById($id: ID!) {
           product(id: $id) {
@@ -82,8 +125,9 @@ function SubscribeAndSave() {
         { variables: { id: merchandise.product.id } }
       );
 
-      let products = [];
-      if (data && data.product) {
+      let products: ProductVariantNode[] = [];
+      console.log(data);
+      if (data && data?.product) {
         products = data.product.variants.edges.map((edge) => ({
           ...edge.node,
           sellingPlans: edge.node.sellingPlanAllocations.nodes.map(
@@ -114,15 +158,13 @@ function SubscribeAndSave() {
   if (sellPlanOptions.length && merchandise.sellingPlan) {
     return (
       <Select
-        Select
         label="Delivery"
         value={
           sellPlanOptions.find(
-            (sellPlan) => sellPlan.id == merchandise.sellingPlan.id
+            (sellPlan) => sellPlan.id == merchandise?.sellingPlan?.id
           )?.id
         }
         onChange={async (selected) => {
-          console.log(selected);
           if (selected.toLowerCase() === "unsubscribe") {
             setIsSubscribed(false);
             const result = await applyCartLinesChange({
@@ -195,10 +237,10 @@ function SubscribeAndSave() {
 }
 function Remove() {
   const { remove_text } = useSettings();
-  const removeText = remove_text ?? "Remove";
+  const removeText: string = remove_text?.toString() ?? "Remove";
   const applyCartLinesChange = useApplyCartLinesChange();
-  const [removing, setRemoving] = useState(false);
-  const [showError, setShowError] = useState(false);
+  const [removing, setRemoving] = useState<boolean>(false);
+  const [showError, setShowError] = useState<boolean>(false);
   const {
     merchandise: { title },
     id,
