@@ -7,6 +7,7 @@ interface ImageEdge {
 }
 
 interface Images {
+  nodes: any;
   edges: ImageEdge[];
 }
 
@@ -31,6 +32,7 @@ interface VariantNode {
   id: string;
   title: string;
   price: Price;
+  image: ImageNode;
   sellingPlanAllocations: SellingPlanAllocations;
 }
 
@@ -70,7 +72,6 @@ interface QueryResponse {
   data: Data;
 }
 
-
 import {
   Banner,
   useApi,
@@ -96,13 +97,12 @@ import {
   ChoiceList,
   View,
   useSettings,
+  Style,
+  GridItemSize,
 } from "@shopify/ui-extensions-react/checkout";
 
 import { useEffect, useState } from "react";
-export default reactExtension(
-  "purchase.checkout.block.render",
-  () => <App />
-);
+export default reactExtension("purchase.checkout.block.render", () => <App />);
 
 function App() {
   const { query, i18n } = useApi();
@@ -115,9 +115,11 @@ function App() {
   } = useSettings();
 
   const titleText: string = title_text?.toString() ?? "You Might Also Like";
-  const collectionHandle: string = collection_handle?.toString() ?? "BEST_SELLING";
+  const collectionHandle: string =
+    collection_handle?.toString() ?? "BEST_SELLING";
   const enableSubscription: boolean = !!enable_subscription ?? false;
-  const subscriptionText: string = subscription_text?.toString() ?? "Subscribe & save 25%";
+  const subscriptionText: string =
+    subscription_text?.toString() ?? "Subscribe & save 25%";
   const addToCheckoutText: string = add_to_checkout_text?.toString() ?? "Add";
 
   const applyCartLinesChange = useApplyCartLinesChange();
@@ -154,6 +156,9 @@ function App() {
                   price{
                       amount
                   }
+                  image{
+                    url
+                  }
                   sellingPlanAllocations(first: 100){
                       nodes{
                           sellingPlan{
@@ -174,22 +179,23 @@ function App() {
         variables: { first: 5, handle: "all-products-new" },
       }
     )
-    .then((response: any) => {
-      console.log(response.data);
-      const productsFromCollection = response.data?.collectionByHandle.products.edges.map((edge: any) => {
-        const { node: productNode } = edge;
-        return {
-          ...productNode,
-          images: {
-            nodes: productNode.images.edges.map((edge: any) => edge.node),
-          },
-          variants: {
-            nodes: productNode.variants.edges.map((edge: any) => edge.node),
-          },
-        };
-      });
-      setProducts(productsFromCollection || []);
-    })
+      .then((response: any) => {
+        console.log(response.data);
+        const productsFromCollection =
+          response.data?.collectionByHandle.products.edges.map((edge: any) => {
+            const { node: productNode } = edge;
+            return {
+              ...productNode,
+              images: {
+                nodes: productNode.images.edges.map((edge: any) => edge.node),
+              },
+              variants: {
+                nodes: productNode.variants.edges.map((edge: any) => edge.node),
+              },
+            };
+          });
+        setProducts(productsFromCollection || []);
+      })
       .catch((error) => console.error(error))
       .finally(() => setLoading(false));
   }, []);
@@ -255,7 +261,7 @@ function App() {
       variants.nodes.length == 1
         ? variants.nodes[0].id
         : variant;
-    let carLines = {
+    const result = await applyCartLinesChange({
       type: "addCartLine",
       merchandiseId: variantToAdd,
       quantity: quantity,
@@ -265,8 +271,7 @@ function App() {
           value: "Offer",
         },
       ],
-    };
-    const result = await applyCartLinesChange(carLines);
+    });
     setAdding(false);
     if (result.type === "error") {
       setShowError(true);
@@ -285,7 +290,7 @@ function App() {
       (myVariant) => myVariant.id === variantToAdd
     );
 
-    let carLines = {
+    const result = await applyCartLinesChange({
       type: "addCartLine",
       merchandiseId: variantToAdd,
       quantity: quantity,
@@ -296,9 +301,9 @@ function App() {
         },
       ],
       sellingPlanId:
-        SelectedVariant?.sellingPlanAllocations.nodes[0].sellingPlan.id ?? null,
-    };
-    const result = await applyCartLinesChange(carLines);
+        SelectedVariant?.sellingPlanAllocations.nodes[0].sellingPlan.id ??
+        undefined!,
+    });
     setAddingSub(false);
     if (result.type === "error") {
       setShowError(true);
@@ -306,32 +311,42 @@ function App() {
     }
   };
 
-  const renderPrice = i18n.formatCurrency(variants.nodes[0].price.amount);
+  console.log(variants);
+  console.log(images);
+  const renderPrice = i18n.formatCurrency(
+    parseFloat(variants.nodes.find((node) => node.id === variant)?.price?.amount ?? variants.nodes[0].price.amount)
+
+  );
 
   const imageUrl =
+    variants.nodes.find((node) => node.id === variant)?.image?.url ??
     images.nodes[0]?.url ??
     "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_medium.png?format=webp&v=1530129081";
+  // images.nodes[0]?.url ??
+  // "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_medium.png?format=webp&v=1530129081";
 
-  const columnsValue =
+  type GridItemSizeArray = GridItemSize[];
+  const columnsValue: GridItemSizeArray =
     variants.nodes.length > 1 ? ["35%", "70%"] : ["25%", "75%"];
+
   const paddingValue = variants.nodes.length > 1 ? "small100" : "none";
+
   return (
-    <View>
+    <View >
       <Divider></Divider>
       <View padding={"small200"}></View>
       <Text size="medium" emphasis="bold">
         {titleText}
       </Text>
       <View padding={"small200"}></View>
-      <BlockStack border="base" spacing="none">
+      <BlockStack border="base" spacing="none" padding={'base'}>
         <View>
           <Grid spacing="none" columns={columnsValue} rows={["auto"]}>
-            <View blockAlignment={"top"}>
+            <View blockAlignment={'center'}>
               <Image
                 cornerRadius="base"
                 borderWidth="base"
                 source={imageUrl}
-                description={title}
                 aspectRatio={1}
               />
             </View>
@@ -350,11 +365,9 @@ function App() {
       </View> */}
 
               <View blockAlignment={"center"}>
-                <BlockStack blockAlignment={"center"}>
+                <BlockStack>
                   <View>
-                    <Text size="large" appearance="interactive">
-                      {title}
-                    </Text>
+                    <Text size="large">{title}</Text>
                   </View>
 
                   <View>
@@ -366,7 +379,7 @@ function App() {
                   <View>
                     {variants.nodes.length > 1 ? (
                       <Select
-                        label="Variant"
+                        label="Variant / Quantity"
                         options={variants.nodes.map((variante) => {
                           return { label: variante.title, value: variante.id };
                         })}
@@ -384,11 +397,9 @@ function App() {
                   </View>
                 </BlockStack>
               </View>
-
-           
-                {enableSubscription &&
-                  variants.nodes[0].sellingPlanAllocations.nodes.length > 0 && (
-                    <View padding={"small100"}>
+              {enableSubscription &&
+                variants.nodes[0].sellingPlanAllocations.nodes.length > 0 && (
+                  <View padding={"small100"}>
                     <ChoiceList
                       name="Subscribe to save 25%"
                       value={isSub ? ["Subscribe"] : [""]}
@@ -400,9 +411,8 @@ function App() {
                         <Choice id="Subscribe">{subscriptionText}</Choice>
                       </BlockStack>
                     </ChoiceList>
-                      </View>
-                  )}
-            
+                  </View>
+                )}
             </BlockStack>
             <View>
               <View></View>

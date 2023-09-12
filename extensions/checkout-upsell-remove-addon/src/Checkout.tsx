@@ -62,8 +62,8 @@ export default reactExtension(
 
 function Extension() {
   const { enable_remove, enable_subscription } = useSettings();
-  const enableRemove: boolean = !!enable_remove ?? true;
-  const enableSubscription: boolean = !!enable_subscription ?? true;
+  const enableRemove: boolean = typeof enable_remove === 'boolean' ? enable_remove : true;
+  const enableSubscription: boolean = typeof enable_subscription === 'boolean' ? enable_subscription : true;
 
   return (
     <View blockAlignment="start">

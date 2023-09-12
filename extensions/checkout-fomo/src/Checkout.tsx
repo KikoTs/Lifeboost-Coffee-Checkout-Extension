@@ -31,7 +31,7 @@ function Extension() {
   
   const fomoTitle: string = fomo_title ?? "Products are in high demand! Get yours now before they're gone.";
   const fomoIcon: IconSource = (fomo_icon ?? "clock") as IconSource;
-  const hurryText: string = hurry_text ?? "<bold>Heads up!</bold> Your products are hot picks! Reserve them by ordering in <critical>{time}</critical>.";
+  const hurryText: string = hurry_text ?? "Hurry! Your selected items are only reserved for <critical>{time}</critical>, complete your order now!";
   const endText: string = end_text ?? "Time's up! Please finish the checkout as the item is still in your cart.";
   const fomoTime: number = fomo_time ?? 10;
 
@@ -53,10 +53,10 @@ function Extension() {
   function parseText(text: string) {
     return text.split(/<bold>|<\/bold>|<critical>|<\/critical>/g).map((part, index) => {
       if (text.includes(`<bold>${part}</bold>`)) {
-        return <Text key={index} emphasis="bold">{part}</Text>;
+        return <Text key={index} emphasis="bold" size="base">{part}</Text>;
       }
       if (text.includes(`<critical>${part}</critical>`)) {
-        return <Text key={index} size="base" appearance="critical">{part}</Text>;
+        return <Text key={index} size="medium" emphasis="bold" appearance="critical">{part}</Text>;
       }
       return part;
     });
@@ -77,7 +77,7 @@ function Extension() {
               <Icon size="fill" source={fomoIcon} appearance='critical' />
             </View>
             <View padding="none" blockAlignment={"center"}>
-              <Text size="base" emphasis="bold">
+              <Text size="medium" emphasis="bold">
                 {fomoTitle}
               </Text>
             </View>
