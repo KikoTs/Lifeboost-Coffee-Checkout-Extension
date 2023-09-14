@@ -12,8 +12,10 @@ interface Images {
 }
 
 interface SellingPlan {
+  priceAdjustments: any;
   id: string;
   name: string;
+  discount?: number;
 }
 
 interface SellingPlanNode {
@@ -32,6 +34,7 @@ interface VariantNode {
   id: string;
   title: string;
   price: Price;
+  compareAtPrice: Price;
   image: ImageNode;
   sellingPlanAllocations: SellingPlanAllocations;
 }
@@ -117,7 +120,7 @@ function App() {
   const titleText: string = title_text?.toString() ?? "You Might Also Like";
   const collectionHandle: string =
     collection_handle?.toString() ?? "BEST_SELLING";
-  const enableSubscription: boolean = !!enable_subscription ?? false;
+  const enableSubscription: boolean = !!enable_subscription ?? false ;
   const subscriptionText: string =
     subscription_text?.toString() ?? "Subscribe & save 25%";
   const addToCheckoutText: string = add_to_checkout_text?.toString() ?? "Add";
@@ -130,6 +133,7 @@ function App() {
   const [isSub, setIsSub] = useState<boolean>(false);
   const [showError, setShowError] = useState<boolean>(false);
   const [quantity, setQuantity] = useState<number>(1);
+  const [sellingPlan, setSellingPlan] = useState<string>("");
   const [variant, setVariant] = useState<string>("");
   useEffect(() => {
     setLoading(true);
@@ -153,6 +157,9 @@ function App() {
                 node {
                   id
                   title
+                  compareAtPrice{
+                      amount
+                  }
                   price{
                       amount
                   }
@@ -164,6 +171,25 @@ function App() {
                           sellingPlan{
                               id
                               name
+                              priceAdjustments {
+                                adjustmentValue {
+                                  ... on SellingPlanFixedAmountPriceAdjustment {
+                                    adjustmentAmount {
+                                      amount
+                                      currencyCode
+                                    }
+                                  }
+                                  ... on SellingPlanFixedPriceAdjustment {
+                                    price {
+                                      amount
+                                      currencyCode
+                                    }
+                                  }
+                                  ... on SellingPlanPercentagePriceAdjustment {
+                                    adjustmentPercentage
+                                  }
+                                }
+                              }
                           }
                       }
                   }
@@ -214,7 +240,7 @@ function App() {
     return (
       <BlockStack spacing="loose">
         <Divider />
-        <Heading level={3}>You might also like</Heading>
+        <Heading level={2}>You might also like</Heading>
         <BlockStack spacing="loose">
           <InlineLayout
             spacing="base"
@@ -300,6 +326,7 @@ function App() {
         },
       ],
       sellingPlanId:
+        sellingPlan ??
         SelectedVariant?.sellingPlanAllocations.nodes[0].sellingPlan.id ??
         undefined!,
     });
@@ -309,12 +336,51 @@ function App() {
       console.error(result.message);
     }
   };
-
-
-  const renderPrice = i18n.formatCurrency(
-    parseFloat(variants.nodes.find((node) => node.id === variant)?.price?.amount ?? variants.nodes[0].price.amount)
-
+  
+  const renderPrice = parseFloat(
+    variants.nodes.find((node) => node.id === variant)?.price?.amount ??
+      variants.nodes[0].price.amount
   );
+  // if variants.nodes.find((node) => node.id === variant)?.compareAtPrice?.amount i18n.formatCurrency(parseFloat())
+  // else if variants.nodes[0].compareAtPrice.amount  i18n.formatCurrency(parseFloat())
+  // else return false
+  const renderDiscount =
+    variants.nodes.find((node) => node.id === variant)?.compareAtPrice
+      ?.amount || variants?.nodes[0]?.compareAtPrice?.amount
+      ? parseFloat(
+          variants.nodes.find((node) => node.id === variant)?.compareAtPrice
+            ?.amount ?? variants.nodes[0].compareAtPrice.amount
+        )
+      : false;
+
+  // calculate % of the discount renderDiscount and renderPrice
+  // const discount = Math.round()
+  const sellingPlans =
+    variants.nodes
+      .find((node) => node.id === variant)
+      ?.sellingPlanAllocations.nodes.map((plan) => ({
+        id: plan.sellingPlan.id,
+        name: plan.sellingPlan.name,
+        discount: plan.sellingPlan?.priceAdjustments[0]?.adjustmentValue.adjustmentPercentage ?? 0,
+      })) ??
+    variants.nodes[0]?.sellingPlanAllocations.nodes.map((plan) => ({
+      id: plan.sellingPlan.id,
+      name: plan.sellingPlan.name,
+      discount: plan.sellingPlan?.priceAdjustments[0]?.adjustmentValue.adjustmentPercentage ?? 0,
+    })) ??
+    false;
+
+
+console.log(sellingPlans);
+const activeSellingPlan = sellingPlans.find((el) => el.id === sellingPlan) ?? sellingPlans[0] ?? null;
+
+// discount percentage sellingPlans.discount from price RenderPrice
+
+function calculateSalePrice(originalPrice: number, discountPercentage: number) {
+  var discountAmount = (originalPrice * discountPercentage) / 100;
+  var salePrice = originalPrice - discountAmount;
+  return salePrice;
+}
 
   const imageUrl =
     variants.nodes.find((node) => node.id === variant)?.image?.url ??
@@ -328,138 +394,121 @@ function App() {
     variants.nodes.length > 1 ? ["35%", "70%"] : ["25%", "75%"];
 
   const paddingValue = variants.nodes.length > 1 ? "small100" : "none";
-
   return (
-    <View >
-      <Divider></Divider>
-      <View padding={"small200"}></View>
-      <Text size="medium" emphasis="bold">
-        {titleText}
-      </Text>
-      <View padding={"small200"}></View>
-      <BlockStack border="base" spacing="none" padding={'base'}>
-        <View>
-          <Grid spacing="none" columns={columnsValue} rows={["auto"]}>
-            <View blockAlignment={'center'}>
-              <Image
-                cornerRadius="base"
-                borderWidth="base"
-                source={imageUrl}
-                aspectRatio={1}
-              />
-            </View>
-            <BlockStack spacing="none" padding="base">
-              {/* <View>
-        <Stepper
-          label="Qunatity"
-          value={quantity}
-          min={1} // Limit quantity to minimum 1
-          onChange={setQuantity}
-          onIncrement={() => setQuantity(quantity + 1)}
-          onDecrement={() =>
-            quantity > 2 ? setQuantity(quantity - 1) : null
-          } // Do nothing if quantity is 1 and decrementing
-        />
-      </View> */}
-
-              <View blockAlignment={"center"}>
-                <BlockStack>
-                  <View>
-                    <Text size="large">{title}</Text>
-                  </View>
-
-                  <View>
-                    <Text size="large" emphasis="bold">
-                      {renderPrice}
-                    </Text>
-                  </View>
-
-                  <View>
-                    {variants.nodes.length > 1 ? (
-                      <Select
-                        label="Variant / Quantity"
-                        options={variants.nodes.map((variante) => {
-                          return { label: variante.title, value: variante.id };
-                        })}
-                        value={
-                          !variants.nodes.some((node) => node.id === variant) ||
-                          variants.nodes.length == 1
-                            ? variants.nodes[0].id
-                            : variant
-                        }
-                        onChange={(selected) => setVariant(selected)}
-                      />
-                    ) : (
-                      ""
-                    )}
-                  </View>
-                </BlockStack>
-              </View>
-              {enableSubscription &&
-                variants.nodes[0].sellingPlanAllocations.nodes.length > 0 && (
-                  <View padding={"small100"}>
-                    <ChoiceList
-                      name="Subscribe to save 25%"
-                      value={isSub ? ["Subscribe"] : [""]}
-                      onChange={(value) => {
-                        setIsSub(!!value.includes("Subscribe"));
-                      }}
-                    >
-                      <BlockStack>
-                        <Choice id="Subscribe">{subscriptionText}</Choice>
-                      </BlockStack>
-                    </ChoiceList>
-                  </View>
-                )}
-            </BlockStack>
-            <View>
-              <View></View>
-            </View>
-
-            {/*
-    {variants.nodes.length > 1 && 
-      <Select
-        label='Variant'
-        options={variants.nodes.map((variante) => {
-          
-          return { label:variante.title , value: variante.id }
-        })}
-        value={(variant === '' || !variants.nodes.includes(variant) || variants.nodes.length == 1) ? variants.nodes[0].id : variant}
-        onChange={(selected) => setVariant(selected)}
-      />
-    }
-    <Stepper
-      label='Qunatity'
-      value={quantity}
-      min={1} // Limit quantity to minimum 1
-      onChange={setQuantity}
-      onIncrement={() => setQuantity(quantity + 1)}
-      onDecrement={() => quantity > 2 ? setQuantity(quantity - 1) : null} // Do nothing if quantity is 1 and decrementing
-    /> */}
-            {showError && (
-              <Banner status="critical">
-                There was an issue adding this product. Please try again.
-              </Banner>
+    <BlockStack spacing="loose">
+      <Divider />
+      <Heading level={2}>{titleText}</Heading>
+      <BlockStack spacing="loose">
+        <InlineLayout
+          spacing="base"
+          columns={[64, "fill", "auto"]}
+          blockAlignment="center"
+        >
+          <Image
+            border="base"
+            borderWidth="base"
+            borderRadius="loose"
+            source={imageUrl}
+            aspectRatio={1}
+          />
+          <BlockStack spacing="none">
+            <Text size="medium" emphasis="bold">
+              {title}
+            </Text>
+            {renderDiscount ? (
+              <InlineLayout columns={["auto", "auto"]} spacing={"small100"}>
+                <Text accessibilityRole="deletion">
+                  {i18n.formatCurrency(renderDiscount)}
+                </Text>{" "}
+                <Text appearance="subdued">
+                <Text>{i18n.formatCurrency(isSub && activeSellingPlan?.discount ? calculateSalePrice(renderPrice, parseInt(activeSellingPlan?.discount))  : renderPrice)}</Text>
+                </Text>{" "}
+                {/* <Text appearance="subdued">Save {discount}%</Text>{" "} */}
+              </InlineLayout>
+            ) : (
+              <Text appearance="subdued">
+                 <Text>{i18n.formatCurrency(isSub && activeSellingPlan?.discount ? calculateSalePrice(renderPrice, parseInt(activeSellingPlan?.discount)) : renderPrice)}</Text>
+              </Text>
             )}
-          </Grid>
+
+            {enableSubscription &&
+              variants.nodes[0].sellingPlanAllocations.nodes.length > 0 && (
+                <View>
+                  <ChoiceList
+                    name="Subscribe to save 25%"
+                    value={isSub ? ["Subscribe"] : [""]}
+                    onChange={(value) => {
+                      setIsSub(!!value.includes("Subscribe"));
+                    }}
+                  >
+                    <BlockStack>
+                      <Choice id="Subscribe">{subscriptionText}</Choice>
+                    </BlockStack>
+                  </ChoiceList>
+                </View>
+              )}
+          </BlockStack>
+          <View maxInlineSize={"50%"}>
+          <Button
+          kind="primary"
+            loading={adding}
+            accessibilityLabel={`Add ${title} to cart`}
+            onPress={isSub ? submitToCarLinesSub : submitToCarLines}
+          >
+            {addToCheckoutText}
+          </Button>
+
+          </View>
+        </InlineLayout>
+        <View>
+          {variants.nodes.length > 1 ? (
+            <Select
+              label="Variant / Quantity"
+              options={variants.nodes.map((variante) => {
+                return { label: variante.title, value: variante.id };
+              })}
+              value={
+                !variants.nodes.some((node) => node.id === variant) ||
+                variants.nodes.length == 1
+                  ? variants.nodes[0].id
+                  : variant
+              }
+              onChange={(selected) => setVariant(selected)}
+            />
+          ) : (
+            ""
+          )}
         </View>
         <View>
-          <View>
-            <Grid columns={["100%"]}>
-              <BlockStack spacing="none" padding="small100">
-                <Button
-                  kind="primary"
-                  loading={adding}
-                  accessibilityLabel={`Add ${title} to cart`}
-                  onPress={isSub ? submitToCarLinesSub : submitToCarLines}
-                >
-                  {addToCheckoutText}
-                </Button>
-              </BlockStack>
-            </Grid>
-          </View>
+          {isSub && sellingPlans && (
+            <Select
+              label="Delivery"
+              value={
+                sellingPlans.find((el) => el.id === sellingPlan)?.id ??
+                sellingPlans[0].id
+              }
+              onChange={(target) => {
+                setSellingPlan(target);
+              }}
+              options={[
+                ...sellingPlans.map((sellPlan) => ({
+                  value: sellPlan.id,
+                  label: sellPlan.name,
+                })),
+              ]}
+            />
+          )}
         </View>
       </BlockStack>
-    </View>
+      {showError && <ErrorBanner />}
+    </BlockStack>
+  );
+}
+
+function ErrorBanner() {
+  return (
+    <Banner status="critical">
+      There was an issue adding this product. Please try again.
+    </Banner>
   );
 }

@@ -126,7 +126,6 @@ function SubscribeAndSave() {
       );
 
       let products: ProductVariantNode[] = [];
-      console.log(data);
       if (data && data?.product) {
         products = data.product.variants.edges.map((edge) => ({
           ...edge.node,
@@ -251,7 +250,7 @@ function Remove() {
   // if originalCartLines has id of current line item, dont show remove button else show remove button use includes to check
   if (
     attributes.find(
-      (attribute) => attribute.key === "Special" && attribute.value === "Offer"
+      (attribute) => attribute.key === "Offer" && attribute.value === "Save While Checkout"
     )
   ) {
     return (

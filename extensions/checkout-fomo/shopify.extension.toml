@@ -7,7 +7,7 @@ api_version = "2023-07"
 
 [[extensions]]
 type = "ui_extension"
-name = "checkout-fomo"
+name = "Fear of Missing Out"
 handle = "checkout-fomo"
 
 # Controls where in Shopify your extension will be injected,

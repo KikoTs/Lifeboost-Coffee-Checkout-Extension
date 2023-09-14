@@ -79,7 +79,7 @@ function Extension() {
   const gridColumns: GridItemSize[] = listImages.map(
     () => `${100 / listImages.length}%` as GridItemSize
   );
-  console.log(reviewData);
+
   return (
     <View>
       <BlockLayout

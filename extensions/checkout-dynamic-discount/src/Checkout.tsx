@@ -25,7 +25,7 @@ function Extension() {
   const [warningText, setWarningText] = useState<string | false>(false);
   const [errorText, setErrorText] = useState<string | false>(false);
 
-  console.log(discountCodes.current);
+
   const handleTextFieldChange = (value: SetStateAction<string>) => {
     setDiscount(value);
   };
@@ -33,7 +33,6 @@ function Extension() {
     setLoading(true);
     setErrorText(false);
     setWarningText(false);
-    console.log(discountCode);
     const result = await applyDiscountCode({
       type: "removeDiscountCode",
       code: discountCode,

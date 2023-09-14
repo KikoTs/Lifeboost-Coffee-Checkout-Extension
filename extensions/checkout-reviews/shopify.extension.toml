@@ -7,7 +7,7 @@ api_version = "2023-07"
 
 [[extensions]]
 type = "ui_extension"
-name = "checkout-reviews"
+name = "JudgeMe Reviews"
 handle = "checkout-reviews"
 
 # Controls where in Shopify your extension will be injected,
