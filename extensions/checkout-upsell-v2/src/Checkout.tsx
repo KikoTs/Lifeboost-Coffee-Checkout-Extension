@@ -37,6 +37,7 @@ interface VariantNode {
   compareAtPrice: Price;
   image: ImageNode;
   sellingPlanAllocations: SellingPlanAllocations;
+  availableForSale: boolean;
 }
 
 interface VariantEdge {
@@ -103,24 +104,48 @@ import {
   Style,
   GridItemSize,
 } from "@shopify/ui-extensions-react/checkout";
+import { Coordinate, PositionType } from "@shopify/ui-extensions/build/ts/surfaces/checkout/components/View/View";
 
 import { useEffect, useState } from "react";
 export default reactExtension("purchase.checkout.block.render", () => <App />);
 
 function App() {
-  const { query, i18n } = useApi();
   const {
     title_text,
     collection_handle,
     enable_subscription,
     subscription_text,
     add_to_checkout_text,
+    mobile_only,
+    desktop_only,
   } = useSettings();
+
+  const DesktopOnly = Style.default({
+    type: "absolute",
+    blockStart: "1000000%",
+    inlineStart: "1000000%",
+  }).when({viewportInlineSize: {min: 'small'}}, { 
+    type: "relative" as PositionType,
+    blockStart: undefined,
+    inlineStart: undefined,
+  })
+  const MobileOnly = Style.default({
+    type: "relative" as PositionType,
+    blockStart: undefined,
+    inlineStart: undefined,
+  }).when({viewportInlineSize: {min: 'small'}}, {
+    type: "absolute" as PositionType,
+    blockStart: "1000000%" as unknown as Coordinate,
+    inlineStart: "1000000%" as unknown as Coordinate,
+  })
+
+  const { query, i18n, analytics, buyerIdentity} = useApi();
+
 
   const titleText: string = title_text?.toString() ?? "You Might Also Like";
   const collectionHandle: string =
     collection_handle?.toString() ?? "BEST_SELLING";
-  const enableSubscription: boolean = !!enable_subscription ?? false ;
+  const enableSubscription: boolean = !!enable_subscription ?? false;
   const subscriptionText: string =
     subscription_text?.toString() ?? "Subscribe & save 25%";
   const addToCheckoutText: string = add_to_checkout_text?.toString() ?? "Add";
@@ -157,6 +182,7 @@ function App() {
                 node {
                   id
                   title
+                  availableForSale
                   compareAtPrice{
                       amount
                   }
@@ -204,6 +230,8 @@ function App() {
       {
         variables: { first: 5, handle: "all-products-new" },
       }
+
+      
     )
       .then((response: any) => {
         const productsFromCollection =
@@ -223,6 +251,14 @@ function App() {
       })
       .catch((error) => console.error(error))
       .finally(() => setLoading(false));
+      const event_name = "checkoutExperiment"
+      const event_data = {
+        event: 'checkoutExperiment',
+        variation: "Checkout v3.0",
+        timestamp: Date.now(),
+        }
+      console.log(event_name, event_data);
+      analytics.publish(event_name, event_data);
   }, []);
 
   // If an offer is added and an error occurs, then show some error feedback using a banner
@@ -238,6 +274,7 @@ function App() {
   // Use Skeleton components to keep placement from shifting when content loads
   if (loading) {
     return (
+      <View position={mobile_only ? MobileOnly : desktop_only ? DesktopOnly : undefined}>
       <BlockStack spacing="loose">
         <Divider />
         <Heading level={2}>You might also like</Heading>
@@ -258,6 +295,8 @@ function App() {
           </InlineLayout>
         </BlockStack>
       </BlockStack>
+      </View>
+
     );
   }
   // If product variants can't be loaded, then show nothing
@@ -278,8 +317,10 @@ function App() {
     return null;
   }
 
-  const { images, title, variants } = productsOnOffer[0];
+  const { images, title, variants: rawVariants } = productsOnOffer[0];
+  const variants = {nodes: rawVariants.nodes.filter((variant) => variant.availableForSale)}
   const submitToCarLines = async () => {
+    console.log("buyerIdentity", )
     setAdding(true);
     const variantToAdd =
       !variants.nodes.some((node) => node.id === variant) ||
@@ -292,11 +333,57 @@ function App() {
       quantity: quantity,
       attributes: [
         {
-          key: "Offer",
-          value: "Save While Checkout",
+          key: "_placement",
+          value: "Under Reviews in Right Column",
+        },
+        {
+          key: "_upsell_type",
+          value: "Regular Upsell",
         },
       ],
     });
+
+    // In checkout, you can publish custom events from your checkout extensions.
+    /**
+     * event_name
+     * type: string
+     * description: The name of a single event or a group of events.
+     */
+    const event_name = "add_upsell"
+    /**
+     * event_data
+     * type: Object
+     * description: An object that contains metadata about the event.
+     */
+    const event_data = {
+      type: "addCartLine",
+      id: variantToAdd,
+      quantity: quantity,
+      value: variants.nodes.find((node) => node.id === variantToAdd)?.price?.amount ?? variants.nodes[0].price.amount,
+      title: variants.nodes.find((node) => node.id === variantToAdd)?.title ?? variants.nodes[0].title,
+      sellingPlan: null,
+      attributes: [
+        {
+          key: "_placement",
+          value: "Under Reviews in Right Column",
+        },
+        {
+          key: "_upsell_type",
+          value: "Regular Upsell",
+        },
+      ],
+      customer: buyerIdentity?.customer?.current ?? null,
+    }
+    /**
+     * @param: event_name
+     * @param: event_data
+     *
+     */
+    // const Product = variants.nodes.find((node) => node.id === variantToAdd)
+    console.log(event_name, event_data)
+    // console.log("Product", Product)
+    analytics.publish(event_name, event_data);
+
     setAdding(false);
     if (result.type === "error") {
       setShowError(true);
@@ -305,6 +392,7 @@ function App() {
   };
 
   const submitToCarLinesSub = async () => {
+    console.log("buyerIdentity", buyerIdentity?.customer)
     setAddingSub(true);
     const variantToAdd =
       !variants.nodes.some((node) => node.id === variant) ||
@@ -321,8 +409,12 @@ function App() {
       quantity: quantity,
       attributes: [
         {
-          key: "Offer",
-          value: "Save While Checkout",
+          key: "_placement",
+          value: "Under Reviews in Right Column",
+        },
+        {
+          key: "_upsell_type",
+          value: "Subscription Upsell",
         },
       ],
       sellingPlanId:
@@ -330,13 +422,56 @@ function App() {
         SelectedVariant?.sellingPlanAllocations.nodes[0].sellingPlan.id ??
         undefined!,
     });
+
+
+    // In checkout, you can publish custom events from your checkout extensions.
+    /**
+     * event_name
+     * type: string
+     * description: The name of a single event or a group of events.
+     */
+    const event_name = "add_upsell"
+    /**
+     * event_data
+     * type: Object
+     * description: An object that contains metadata about the event.
+     */
+    const event_data = {
+      type: "addCartLine",
+      id: variantToAdd,
+      quantity: quantity,
+      value: variants.nodes.find((node) => node.id === variantToAdd)?.price?.amount ?? variants.nodes[0].price.amount,
+      title: variants.nodes.find((node) => node.id === variantToAdd)?.title ?? variants.nodes[0].title,
+      sellingPlan: sellingPlan ?? SelectedVariant?.sellingPlanAllocations.nodes[0].sellingPlan ?? null,
+      attributes: [
+        {
+          key: "_placement",
+          value: "Under Reviews in Right Column",
+        },
+        {
+          key: "_upsell_type",
+          value: "Subscription Upsell",
+        },
+      ],
+      customer: buyerIdentity?.customer?.current ?? null,
+    } // add here product whole object
+    /**
+     * @param: event_name
+     * @param: event_data
+     *
+     */
+    // const Product = variants.nodes.find((node) => node.id === variantToAdd)
+    console.log(event_name, event_data)
+    analytics.publish(event_name, event_data);
+
+
     setAddingSub(false);
     if (result.type === "error") {
       setShowError(true);
       console.error(result.message);
     }
   };
-  
+
   const renderPrice = parseFloat(
     variants.nodes.find((node) => node.id === variant)?.price?.amount ??
       variants.nodes[0].price.amount
@@ -361,26 +496,32 @@ function App() {
       ?.sellingPlanAllocations.nodes.map((plan) => ({
         id: plan.sellingPlan.id,
         name: plan.sellingPlan.name,
-        discount: plan.sellingPlan?.priceAdjustments[0]?.adjustmentValue.adjustmentPercentage ?? 0,
+        discount:
+          plan.sellingPlan?.priceAdjustments[0]?.adjustmentValue
+            .adjustmentPercentage ?? 0,
       })) ??
     variants.nodes[0]?.sellingPlanAllocations.nodes.map((plan) => ({
       id: plan.sellingPlan.id,
       name: plan.sellingPlan.name,
-      discount: plan.sellingPlan?.priceAdjustments[0]?.adjustmentValue.adjustmentPercentage ?? 0,
+      discount:
+        plan.sellingPlan?.priceAdjustments[0]?.adjustmentValue
+          .adjustmentPercentage ?? 0,
     })) ??
     false;
 
+  const activeSellingPlan =
+    sellingPlans.find((el) => el.id === sellingPlan) ?? sellingPlans[0] ?? null;
 
-console.log(sellingPlans);
-const activeSellingPlan = sellingPlans.find((el) => el.id === sellingPlan) ?? sellingPlans[0] ?? null;
+  // discount percentage sellingPlans.discount from price RenderPrice
 
-// discount percentage sellingPlans.discount from price RenderPrice
-
-function calculateSalePrice(originalPrice: number, discountPercentage: number) {
-  var discountAmount = (originalPrice * discountPercentage) / 100;
-  var salePrice = originalPrice - discountAmount;
-  return salePrice;
-}
+  function calculateSalePrice(
+    originalPrice: number,
+    discountPercentage: number
+  ) {
+    var discountAmount = (originalPrice * discountPercentage) / 100;
+    var salePrice = originalPrice - discountAmount;
+    return salePrice;
+  }
 
   const imageUrl =
     variants.nodes.find((node) => node.id === variant)?.image?.url ??
@@ -395,7 +536,8 @@ function calculateSalePrice(originalPrice: number, discountPercentage: number) {
 
   const paddingValue = variants.nodes.length > 1 ? "small100" : "none";
   return (
-    <BlockStack spacing="loose">
+    <View position={mobile_only ? MobileOnly : desktop_only ? DesktopOnly : undefined}>
+          <BlockStack spacing="loose">
       <Divider />
       <Heading level={2}>{titleText}</Heading>
       <BlockStack spacing="loose">
@@ -404,13 +546,15 @@ function calculateSalePrice(originalPrice: number, discountPercentage: number) {
           columns={[64, "fill", "auto"]}
           blockAlignment="center"
         >
-          <Image
+          <View
             border="base"
             borderWidth="base"
             borderRadius="loose"
-            source={imageUrl}
-            aspectRatio={1}
-          />
+            padding={"extraTight"}
+          >
+            <Image borderRadius="loose" source={imageUrl} aspectRatio={1} />
+          </View>
+
           <BlockStack spacing="none">
             <Text size="medium" emphasis="bold">
               {title}
@@ -421,13 +565,31 @@ function calculateSalePrice(originalPrice: number, discountPercentage: number) {
                   {i18n.formatCurrency(renderDiscount)}
                 </Text>{" "}
                 <Text appearance="subdued">
-                <Text>{i18n.formatCurrency(isSub && activeSellingPlan?.discount ? calculateSalePrice(renderPrice, parseInt(activeSellingPlan?.discount))  : renderPrice)}</Text>
+                  <Text>
+                    {i18n.formatCurrency(
+                      isSub && activeSellingPlan?.discount
+                        ? calculateSalePrice(
+                            renderPrice,
+                            parseInt(activeSellingPlan?.discount)
+                          )
+                        : renderPrice
+                    )}
+                  </Text>
                 </Text>{" "}
                 {/* <Text appearance="subdued">Save {discount}%</Text>{" "} */}
               </InlineLayout>
             ) : (
               <Text appearance="subdued">
-                 <Text>{i18n.formatCurrency(isSub && activeSellingPlan?.discount ? calculateSalePrice(renderPrice, parseInt(activeSellingPlan?.discount)) : renderPrice)}</Text>
+                <Text>
+                  {i18n.formatCurrency(
+                    isSub && activeSellingPlan?.discount
+                      ? calculateSalePrice(
+                          renderPrice,
+                          parseInt(activeSellingPlan?.discount)
+                        )
+                      : renderPrice
+                  )}
+                </Text>
               </Text>
             )}
 
@@ -448,20 +610,17 @@ function calculateSalePrice(originalPrice: number, discountPercentage: number) {
                 </View>
               )}
           </BlockStack>
-          <View maxInlineSize={"50%"}>
           <Button
-          kind="primary"
+            kind="primary"
             loading={adding}
             accessibilityLabel={`Add ${title} to cart`}
             onPress={isSub ? submitToCarLinesSub : submitToCarLines}
           >
             {addToCheckoutText}
           </Button>
-
-          </View>
         </InlineLayout>
+        {variants.nodes.length > 1 ? (
         <View>
-          {variants.nodes.length > 1 ? (
             <Select
               label="Variant / Quantity"
               options={variants.nodes.map((variante) => {
@@ -475,12 +634,11 @@ function calculateSalePrice(originalPrice: number, discountPercentage: number) {
               }
               onChange={(selected) => setVariant(selected)}
             />
-          ) : (
-            ""
-          )}
-        </View>
+        </View>) : (
+          ""
+        )}
+        {isSub && sellingPlans && (
         <View>
-          {isSub && sellingPlans && (
             <Select
               label="Delivery"
               value={
@@ -497,11 +655,11 @@ function calculateSalePrice(originalPrice: number, discountPercentage: number) {
                 })),
               ]}
             />
-          )}
-        </View>
+        </View>)}
       </BlockStack>
       {showError && <ErrorBanner />}
     </BlockStack>
+    </View>
   );
 }
 

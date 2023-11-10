@@ -246,11 +246,11 @@ function Remove() {
     quantity,
     attributes,
   } = useTarget();
-
+  console.log(attributes);
   // if originalCartLines has id of current line item, dont show remove button else show remove button use includes to check
   if (
     attributes.find(
-      (attribute) => attribute.key === "Offer" && attribute.value === "Save While Checkout"
+      (attribute) => attribute.key === "_placement" && attribute.value === "Under Reviews in Right Column"
     )
   ) {
     return (

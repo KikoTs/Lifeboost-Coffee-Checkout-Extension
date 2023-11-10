@@ -49,3 +49,15 @@ key = "list_images"
 type = "multi_line_text_field"
 name = "List of images"
 description = "List of images split by ',' in example https://shopify.com/image.png,  https://shopify.com/image2.png"
+
+[[extensions.settings.fields]]
+key = "mobile_only"
+type = "boolean"
+name = "Mobile Only"
+description = "This field makes the component to render only on mobile devices"
+
+[[extensions.settings.fields]]
+key = "desktop_only"
+type = "boolean"
+name = "Desktop Only"
+description = "This field makes the component to render only on desktop devices"

@@ -72,3 +72,15 @@ key = "add_to_checkout_text"
 type = "single_line_text_field"
 name = "Add to Checkout Text"
 description = "With this field you can change the text shown in the Add to Checkout Button in example: Add"
+
+[[extensions.settings.fields]]
+key = "mobile_only"
+type = "boolean"
+name = "Mobile Only"
+description = "This field makes the component to render only on mobile devices"
+
+[[extensions.settings.fields]]
+key = "desktop_only"
+type = "boolean"
+name = "Desktop Only"
+description = "This field makes the component to render only on desktop devices"

@@ -73,3 +73,15 @@ key = "end_text"
 type = "single_line_text_field"
 name = "Timer ended text"
 description = "Enter the text to show after the countdown has ended example: Time's up! Please finish the checkout as the item is still in your cart."
+
+[[extensions.settings.fields]]
+key = "mobile_only"
+type = "boolean"
+name = "Mobile Only"
+description = "This field makes the component to render only on mobile devices"
+
+[[extensions.settings.fields]]
+key = "desktop_only"
+type = "boolean"
+name = "Desktop Only"
+description = "This field makes the component to render only on desktop devices"

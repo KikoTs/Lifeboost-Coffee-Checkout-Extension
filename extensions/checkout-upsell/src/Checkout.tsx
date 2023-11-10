@@ -105,7 +105,7 @@ import { useEffect, useState } from "react";
 export default reactExtension("purchase.checkout.block.render", () => <App />);
 
 function App() {
-  const { query, i18n } = useApi();
+  const { query, i18n, buyerIdentity } = useApi();
   const {
     title_text,
     collection_handle,
@@ -254,6 +254,7 @@ function App() {
 
   const { images, title, variants } = productsOnOffer[0];
   const submitToCarLines = async () => {
+    console.log("buyerIdentity", buyerIdentity?.customer)
     setAdding(true);
     const variantToAdd =
       !variants.nodes.some((node) => node.id === variant) ||

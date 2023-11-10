@@ -12,31 +12,21 @@ import {
   Divider,
   BlockLayout,
   InlineLayout,
+  SkeletonImage,
+  SkeletonText,
+  TextBlock,
+  useSettings,
 } from "@shopify/ui-extensions-react/checkout";
 import { useEffect, useState } from "react";
+import { Coordinate, PositionType } from "@shopify/ui-extensions/build/ts/surfaces/checkout/components/View/View";
+
+// purchase.checkout.cart-line-list.render-after
 export default reactExtension("purchase.checkout.block.render", () => (
   <Extension />
 ));
 type GridItemSize = "auto" | "fill" | `${number}%` | `${number}fr` | number;
-import { Style, extension } from "@shopify/ui-extensions/checkout";
-// shop_medals: [{
-//   "type": "ver_rev",
-//   "tier": "diamond",
-//   "tier_key": 500,
-//   "medal_image_url": "//cdn.judge.me/assets/review_site/medals/ver_rev/diamond-d17e55051276e78434944a46bcf9e44e10fca778d66a60222afdd1e57bd718fc.svg",
-//   "title": "Diamond Verified Reviews Shop",
-//   "description": "Obtained at least 1000 reviews submitted by genuine customers with proof of purchase history",
-//   "value": "12.8K",
-//   "value_is_long": true
-// },
-// {
-//   "type": "mon_rec",
-//   "tier": "diamond",
-//   "tier_key": 500,
-//   "medal_image_url": "//cdn.judge.me/assets/review_site/medals/mon_rec/diamond-d71639018b32fc036d5dc8182bf6b6729eb9228153815f8bf232dcf66389110e.svg",
-//   "title": "Diamond Monthly Record Shop",
-//   "description": "Achieved an all-time record of 250 published verified reviews within one calendar month."
-// },]
+import { Style } from "@shopify/ui-extensions/checkout";
+
 interface ShopMedals {
   type: string;
   tier: string;
@@ -55,17 +45,43 @@ interface ReviewData {
 }
 
 function Extension() {
+  const {
+    mobile_only,
+    desktop_only,
+  } = useSettings();
+  const DesktopOnly = Style.default({
+    type: "absolute",
+    blockStart: "1000000%",
+    inlineStart: "1000000%",
+  }).when({viewportInlineSize: {min: 'small'}}, { 
+    type: "relative" as PositionType,
+    blockStart: undefined,
+    inlineStart: undefined,
+  })
+  const MobileOnly = Style.default({
+    type: "relative" as PositionType,
+    blockStart: undefined,
+    inlineStart: undefined,
+  }).when({viewportInlineSize: {min: 'small'}}, {
+    type: "absolute" as PositionType,
+    blockStart: "1000000%" as unknown as Coordinate,
+    inlineStart: "1000000%" as unknown as Coordinate,
+  })
+
   const [reviewData, setReviewData] = useState<ReviewData>({
     all_reviews_rating: "",
     all_reviews_count: 0,
     shop_medals: [],
   });
+  const [loading, setLoading] = useState(true);
+  const [skeletonBlocks, setSkeletonBlocks] = useState([1,2,3,4,5]);
 
   useEffect(() => {
     fetch("https://lifebooxt.vercel.app/api/judgememedals")
       .then((response) => response.json())
       .then((data: ReviewData) => {
         setReviewData(data);
+        setLoading(false);
       });
   }, []);
   const listImages = reviewData.shop_medals.map((item) => ({
@@ -79,33 +95,64 @@ function Extension() {
   const gridColumns: GridItemSize[] = listImages.map(
     () => `${100 / listImages.length}%` as GridItemSize
   );
-
-  return (
+  const gridColumnsSkeleton: GridItemSize[] = skeletonBlocks.map(
+    () => `${100 / listImages.length}%` as GridItemSize
+  );
+  if (loading) {
+    return (
+<View position={mobile_only ? MobileOnly : desktop_only ? DesktopOnly : undefined}>
+  <Divider></Divider>
+  <BlockLayout rows={[100, "fill"]}>
+    <View padding="base">
+      <View padding="base" inlineAlignment="center">
+        <InlineLayout spacing={"large500"} columns={["auto"]}>
+          <Grid spacing={"none"} columns={["auto"]}>
+            <View inlineAlignment="center" blockAlignment={"center"}>
+            <SkeletonText />
+            </View>
+            <View inlineAlignment="center" blockAlignment={"center"}>
+              <SkeletonText /> 
+            </View>
+          </Grid>
+          <Grid spacing={"none"} columns={["auto"]}>
+            <SkeletonText />
+            <View>
+            <SkeletonText />
+            </View>
+          </Grid>
+        </InlineLayout>
+      </View>
+    </View>
     <View>
+      <View>
+        <Grid columns={gridColumnsSkeleton} spacing="base">
+          {skeletonBlocks.map((item, index) => (
+            <View key={index} position={{ type: "relative", }}>
+              <SkeletonImage aspectRatio={1} />
+              </View>
+            ))}
+            </Grid>
+        </View>
+        </View>
+      </BlockLayout>
+  </View>
+    );
+  }
+  return (
+    <View position={mobile_only ? MobileOnly : desktop_only ? DesktopOnly : undefined}>
+      <Divider></Divider>
       <BlockLayout
-        rows={Style.default([100, "fill"]).when(
-          { viewportInlineSize: { min: "small" } },
-          [80, "fill"]
-        )}
+        rows={[100, "fill"]}
       >
-        <View border="base" padding="base">
+        <View padding="base">
           <View padding="base" inlineAlignment="center">
             <InlineLayout
               spacing={"large500"}
-              columns={Style.default(["auto"]).when(
-                { viewportInlineSize: { min: "small" } },
-                ["auto", "auto", "auto"]
-              )}
+              columns={["auto"]}
             >
               <Grid
-                spacing={Style.default("none").when(
-                  { viewportInlineSize: { min: "small" } },
-                  "small100"
-                )}
-                columns={Style.default(["auto"]).when(
-                  { viewportInlineSize: { min: "small" } },
-                  ["auto", "auto", "auto"]
-                )}
+                spacing={"none"}
+                columns={["auto"]}
               >
                 <View inlineAlignment="center" blockAlignment={"center"}>
                   {" "}
@@ -116,21 +163,15 @@ function Extension() {
                   />
                 </View>
                 <View inlineAlignment="center" blockAlignment={"center"}>
-                  <Text> {reviewData.all_reviews_count} reviews</Text>
+                  <TextBlock inlineAlignment={'center'}> {reviewData.all_reviews_count} reviews</TextBlock>
                 </View>
               </Grid>
 
               <Grid
-                spacing={Style.default("none").when(
-                  { viewportInlineSize: { min: "small" } },
-                  "small100"
-                )}
-                columns={Style.default(["auto"]).when(
-                  { viewportInlineSize: { min: "small" } },
-                  ["auto", "auto", "auto"]
-                )}
+                spacing={"none"}
+                columns={["auto"]}
               >
-                <Text>Verified by</Text>
+                <TextBlock inlineAlignment={'center'} >Verified by</TextBlock>
                 <View>
                   <Image source="https://judgeme-public-images.imgix.net/judgeme/logos/logo-judgeme.svg?auto=format" />
                 </View>
@@ -138,11 +179,13 @@ function Extension() {
             </InlineLayout>
           </View>
         </View>
-        <View border="base" padding="base">
+
+        <View>
           <View>
-            <Grid columns={gridColumns} spacing="base" padding="base">
-              {listImages.map((item) => (
+            <Grid columns={gridColumns} spacing="base">
+              {listImages.map((item, index) => (
                 <View
+                key={index}
                   position={{
                     type: "relative",
                   }}
@@ -173,21 +216,6 @@ function Extension() {
                   )}
                 </View>
               ))}
-              {/* <View>
-                <Image source="ver_rev/diamond.svg?auto=format" />
-              </View>
-              <View>
-                <Image source="https://judgeme-public-images.imgix.net/judgeme/medals-v2/mon_rec/diamond.svg?auto=format" />
-              </View>
-              <View>
-                <Image source="https://judgeme-public-images.imgix.net/judgeme/medals-v2/tops_trend/250.svg?auto=format" />
-              </View>
-              <View>
-                <Image source="https://judgeme-public-images.imgix.net/judgeme/medals-v2/tran/bronze.svg?auto=format" />
-              </View>
-              <View>
-                <Image source="https://judgeme-public-images.imgix.net/judgeme/medals-v2/tops/1-percent.svg?auto=format" />
-              </View> */}
             </Grid>
           </View>
         </View>

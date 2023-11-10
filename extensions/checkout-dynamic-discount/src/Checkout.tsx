@@ -10,13 +10,40 @@ import {
   Text,
   Tag,
   Icon,
+  Style,
+  useSettings,
 } from "@shopify/ui-extensions-react/checkout";
+import { Coordinate, PositionType } from "@shopify/ui-extensions/build/ts/surfaces/checkout/components/View/View";
 import { SetStateAction, useState } from "react";
 export default reactExtension("purchase.checkout.block.render", () => (
   <Extension />
 ));
 
 function Extension() {
+  const {
+    mobile_only,
+    desktop_only,
+  } = useSettings();
+
+  const DesktopOnly = Style.default({
+    type: "absolute",
+    blockStart: "1000000%",
+    inlineStart: "1000000%",
+  }).when({viewportInlineSize: {min: 'small'}}, { 
+    type: "relative" as PositionType,
+    blockStart: undefined,
+    inlineStart: undefined,
+  })
+  const MobileOnly = Style.default({
+    type: "relative" as PositionType,
+    blockStart: undefined,
+    inlineStart: undefined,
+  }).when({viewportInlineSize: {min: 'small'}}, {
+    type: "absolute" as PositionType,
+    blockStart: "1000000%" as unknown as Coordinate,
+    inlineStart: "1000000%" as unknown as Coordinate,
+  })
+
   const { discountCodes } = useApi();
   const applyDiscountCode = useApplyDiscountCodeChange();
   const [discount, setDiscount] = useState("");
@@ -43,8 +70,9 @@ function Extension() {
     setLoading(false);
   };
 
+
   return (
-    <View>
+    <View position={mobile_only ? MobileOnly : desktop_only ? DesktopOnly : undefined}>
       <Grid columns={["80%", "auto"]} spacing="loose">
         <TextField
           error={errorText ? errorText?.toString() : ''}
