@@ -383,7 +383,7 @@
     "@remote-ui/rpc" "^1.3.6"
     "@remote-ui/types" "^1.1.3"
 
-"@remote-ui/core@^2.1.17":
+"@remote-ui/core@^2.1.17", "@remote-ui/core@^2.2.2", "@remote-ui/core@^2.2.3":
   version "2.2.3"
   resolved "https://registry.yarnpkg.com/@remote-ui/core/-/core-2.2.3.tgz#5d53666d8bce9874d4976c21e88dd202e6080cd0"
   integrity sha512-LWwAlDJw9c+b61dViU6v8ivU0AalgGikvqidVoBLt+CLjTAXMwIkzIeYdjyRyp7JgGxnTYxnmVHUdJdxX144jg==
@@ -402,6 +402,17 @@
     "@types/react" ">=17.0.0 <18.0.0"
     "@types/react-reconciler" "^0.26.0"
     react-reconciler ">=0.26.0 <0.27.0"
+
+"@remote-ui/react@^5.0.2":
+  version "5.0.2"
+  resolved "https://registry.yarnpkg.com/@remote-ui/react/-/react-5.0.2.tgz#449a935d53eb38265708f691bc9d57674d02be4b"
+  integrity sha512-v1C6QekhR6NrpzHA1dGMPun47N0TBb6VRq+yjIN5b6Z7i7wApf5+ifKc5gYouv4ENfoKPhatXAsOoYblG5iRpw==
+  dependencies:
+    "@remote-ui/async-subscription" "^2.1.14"
+    "@remote-ui/core" "^2.2.2"
+    "@remote-ui/rpc" "^1.4.3"
+    "@types/react" ">=17.0.0 <19.0.0"
+    "@types/react-reconciler" ">=0.26.0 <0.30.0"
 
 "@remote-ui/rpc@^1.3.6", "@remote-ui/rpc@^1.4.3":
   version "1.4.3"
@@ -539,6 +550,15 @@
     "@shopify/cli-kit" "3.48.4"
     n-gram "2.0.2"
 
+"@shopify/ui-extensions-react@2023.10.x":
+  version "2023.10.0"
+  resolved "https://registry.yarnpkg.com/@shopify/ui-extensions-react/-/ui-extensions-react-2023.10.0.tgz#f143846decaf4d6f613e2839e537349265e4e6be"
+  integrity sha512-/i+PyQ0r5XRQZ0buLzvscz5Pn6qGqriyn8deJiXyfZq9WcBuMqS2HwUea3jqAdncv2Ih2F3fstiJ8bhS84R3Kw==
+  dependencies:
+    "@remote-ui/async-subscription" "^2.1.12"
+    "@remote-ui/react" "^5.0.2"
+    "@types/react" ">=18.0.0"
+
 "@shopify/ui-extensions-react@2023.7.x":
   version "2023.7.2"
   resolved "https://registry.yarnpkg.com/@shopify/ui-extensions-react/-/ui-extensions-react-2023.7.2.tgz#b2f7e24795260c6690379668033877dd8c8b632e"
@@ -547,6 +567,14 @@
     "@remote-ui/async-subscription" "^2.1.12"
     "@remote-ui/react" "4.5.x"
     "@types/react" ">=17.0.0 <18.0.0"
+
+"@shopify/ui-extensions@2023.10.x":
+  version "2023.10.0"
+  resolved "https://registry.yarnpkg.com/@shopify/ui-extensions/-/ui-extensions-2023.10.0.tgz#4b277d9a6a0f9ad5fb6ad890bd7bac3c2d29994f"
+  integrity sha512-DG76b60VPcJdOEPsfGVYCi02U2AYEhgnnosfvUPVf22r/LPTJnzM/UlMy5cfXcerM8VjonctC7jGS1BYJLDUlQ==
+  dependencies:
+    "@remote-ui/async-subscription" "^2.1.12"
+    "@remote-ui/core" "^2.2.3"
 
 "@shopify/ui-extensions@2023.7.x":
   version "2023.7.2"
@@ -617,6 +645,13 @@
   resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.5.tgz#5f19d2b85a98e9558036f6a3cacc8819420f05cf"
   integrity sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==
 
+"@types/react-reconciler@>=0.26.0 <0.30.0":
+  version "0.28.8"
+  resolved "https://registry.yarnpkg.com/@types/react-reconciler/-/react-reconciler-0.28.8.tgz#e51710572bcccf214306833c2438575d310b3e98"
+  integrity sha512-SN9c4kxXZonFhbX4hJrZy37yw9e7EIxcpHCxQv5JUS18wDE5ovkQKlqQEkufdJCCMfuI9BnjUJvhYeJ9x5Ra7g==
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-reconciler@^0.26.0":
   version "0.26.7"
   resolved "https://registry.yarnpkg.com/@types/react-reconciler/-/react-reconciler-0.26.7.tgz#0c4643f30821ae057e401b0d9037e03e8e9b2a36"
@@ -637,6 +672,15 @@
   version "17.0.65"
   resolved "https://registry.yarnpkg.com/@types/react/-/react-17.0.65.tgz#95f6a2ab61145ffb69129d07982d047f9e0870cd"
   integrity sha512-oxur785xZYHvnI7TRS61dXbkIhDPnGfsXKv0cNXR/0ml4SipRIFpSMzA7HMEfOywFwJ5AOnPrXYTEiTRUQeGlQ==
+  dependencies:
+    "@types/prop-types" "*"
+    "@types/scheduler" "*"
+    csstype "^3.0.2"
+
+"@types/react@>=17.0.0 <19.0.0", "@types/react@>=18.0.0", "@types/react@^18.0.0":
+  version "18.2.37"
+  resolved "https://registry.yarnpkg.com/@types/react/-/react-18.2.37.tgz#0f03af69e463c0f19a356c2660dbca5d19c44cae"
+  integrity sha512-RGAYMi2bhRgEXT3f4B92WTohopH6bIXw05FuGlmJEnv/omEn190+QYEIYxIAuIBdKgboYYdVved2p1AxZVQnaw==
   dependencies:
     "@types/prop-types" "*"
     "@types/scheduler" "*"
@@ -2788,6 +2832,14 @@ rc@1.2.8:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
+react-reconciler@0.29.0, react-reconciler@^0.29.0:
+  version "0.29.0"
+  resolved "https://registry.yarnpkg.com/react-reconciler/-/react-reconciler-0.29.0.tgz#ee769bd362915076753f3845822f2d1046603de7"
+  integrity sha512-wa0fGj7Zht1EYMRhKWwoo1H9GApxYLBuhoAuXN0TlltESAjDssB+Apf0T/DngVqaMyPypDmabL37vw/2aRM98Q==
+  dependencies:
+    loose-envify "^1.1.0"
+    scheduler "^0.23.0"
+
 "react-reconciler@>=0.26.0 <0.27.0":
   version "0.26.2"
   resolved "https://registry.yarnpkg.com/react-reconciler/-/react-reconciler-0.26.2.tgz#bbad0e2d1309423f76cf3c3309ac6c96e05e9d91"
@@ -2797,15 +2849,7 @@ rc@1.2.8:
     object-assign "^4.1.1"
     scheduler "^0.20.2"
 
-react-reconciler@^0.29.0:
-  version "0.29.0"
-  resolved "https://registry.yarnpkg.com/react-reconciler/-/react-reconciler-0.29.0.tgz#ee769bd362915076753f3845822f2d1046603de7"
-  integrity sha512-wa0fGj7Zht1EYMRhKWwoo1H9GApxYLBuhoAuXN0TlltESAjDssB+Apf0T/DngVqaMyPypDmabL37vw/2aRM98Q==
-  dependencies:
-    loose-envify "^1.1.0"
-    scheduler "^0.23.0"
-
-react@18.2.0, react@^18.2.0:
+react@18.2.0, react@^18.0.0, react@^18.2.0:
   version "18.2.0"
   resolved "https://registry.yarnpkg.com/react/-/react-18.2.0.tgz#555bd98592883255fa00de14f1151a917b5d77d5"
   integrity sha512-/3IjMdb2L9QbBdWiW5e3P2/npwMBaU9mHCSCUzNln0ZCYbcfTsGbTJrU/kGemdH2IWmB2ioZ+zkxtmq6g09fGQ==

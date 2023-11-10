@@ -251,14 +251,6 @@ function App() {
       })
       .catch((error) => console.error(error))
       .finally(() => setLoading(false));
-      const event_name = "checkoutExperiment"
-      const event_data = {
-        event: 'checkoutExperiment',
-        variation: "Checkout v3.0",
-        timestamp: Date.now(),
-        }
-      console.log(event_name, event_data);
-      analytics.publish(event_name, event_data);
   }, []);
 
   // If an offer is added and an error occurs, then show some error feedback using a banner
