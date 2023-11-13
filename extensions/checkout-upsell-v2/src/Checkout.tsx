@@ -312,7 +312,7 @@ function App() {
   const { images, title, variants: rawVariants } = productsOnOffer[0];
   const variants = {nodes: rawVariants.nodes.filter((variant) => variant.availableForSale)}
   const submitToCarLines = async () => {
-    console.log("buyerIdentity", )
+    // console.log("buyerIdentity", )
     setAdding(true);
     const variantToAdd =
       !variants.nodes.some((node) => node.id === variant) ||
@@ -372,7 +372,7 @@ function App() {
      *
      */
     // const Product = variants.nodes.find((node) => node.id === variantToAdd)
-    console.log(event_name, event_data)
+    // console.log(event_name, event_data)
     // console.log("Product", Product)
     analytics.publish(event_name, event_data);
 
@@ -384,7 +384,7 @@ function App() {
   };
 
   const submitToCarLinesSub = async () => {
-    console.log("buyerIdentity", buyerIdentity?.customer)
+    // console.log("buyerIdentity", buyerIdentity?.customer)
     setAddingSub(true);
     const variantToAdd =
       !variants.nodes.some((node) => node.id === variant) ||
@@ -394,7 +394,10 @@ function App() {
     const SelectedVariant = variants.nodes.find(
       (myVariant) => myVariant.id === variantToAdd
     );
-
+    console.log("heyy", SelectedVariant);
+    const selectedSellingPlan = sellingPlan
+      ? sellingPlan
+      : SelectedVariant?.sellingPlanAllocations.nodes[0].sellingPlan.id;
     const result = await applyCartLinesChange({
       type: "addCartLine",
       merchandiseId: variantToAdd,
@@ -410,8 +413,7 @@ function App() {
         },
       ],
       sellingPlanId:
-        sellingPlan ??
-        SelectedVariant?.sellingPlanAllocations.nodes[0].sellingPlan.id ??
+        selectedSellingPlan ??
         undefined!,
     });
 
@@ -453,7 +455,7 @@ function App() {
      *
      */
     // const Product = variants.nodes.find((node) => node.id === variantToAdd)
-    console.log(event_name, event_data)
+    // console.log(event_name, event_data)
     analytics.publish(event_name, event_data);
 
 
@@ -548,7 +550,7 @@ function App() {
           </View>
 
           <BlockStack spacing="none">
-            <Text size="medium" emphasis="bold">
+            <Text size="base" emphasis="bold">
               {title}
             </Text>
             {renderDiscount ? (

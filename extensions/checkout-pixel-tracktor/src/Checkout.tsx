@@ -21,7 +21,7 @@ function Tracktor() {
       timestamp: Date.now(),
       customer: buyerIdentity?.customer?.current ?? null,
       }
-    console.log(event_name, event_data);
+    // console.log(event_name, event_data);
     analytics.publish(event_name, event_data);
   }, []);
 
